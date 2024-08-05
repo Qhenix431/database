@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask Application</title>
+    <title>Database</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
     <div class="container">
         <h1 class="mt-5">Database</h1>
-
         <h2>Fetch Data</h2>
         <form id="fetchForm">
             <div class="form-group">
@@ -84,7 +83,40 @@
                 const params = type === 'ORDER_ID' ? { type: type, ORDER_ID: identifier } : { type: type, PID: identifier };
 
                 $.get('/fetch', params, function(data) {
-                    $('#result').html('<pre>' + JSON.stringify(data, null, 4) + '</pre>');
+                    if (data.length > 0) {
+                        const firstRecord = data[0];
+                        let resultHtml = `<div class="mt-4">
+                            <p><strong>PID:</strong> ${firstRecord.PID}</p>
+                            <p><strong>ORDER_ID:</strong> ${firstRecord.ORDER_ID}</p>
+                            <p><strong>FIN:</strong> ${firstRecord.FIN}</p>
+                            <p><strong>EN_LOC_NURSE_UNIT_DISP:</strong> ${firstRecord.EN_LOC_NURSE_UNIT_DISP}</p>
+                            <p><strong>ACCN:</strong> ${firstRecord.ACCN}</p>
+                        </div>`;
+
+                        let table = '<table class="table table-striped mt-4" style="font-size: smaller; white-space: nowrap;"><thead><tr>';
+                        table += '<th>ORDER_MNEMONIC</th><th>TASK_ASSAY_CD</th><th>R_TASK_ASSAY_DISP</th>';
+                        table += '<th>RESULT_VALUE_NUMERIC</th><th>PERFORM_DT_TM</th></tr></thead><tbody>';
+                        data.forEach(record => {
+                            table += '<tr>';
+                            table += `<td>${record.ORDER_MNEMONIC}</td>`;
+                            table += `<td>${record.TASK_ASSAY_CD}</td>`;
+                            table += `<td>${record.R_TASK_ASSAY_DISP}</td>`;
+                            table += `<td>${record.RESULT_VALUE_NUMERIC}</td>`;
+                            table += `<td>${record.PERFORM_DT_TM}</td>`;
+                            table += '</tr>';
+                        });
+                        table += '</tbody></table>';
+                        resultHtml += table;
+
+                        const newWindow = window.open();
+                        newWindow.document.write('<html><head><title>Fetched Data</title><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"></head><body>');
+                        newWindow.document.write('<div class="container"><h1 class="mt-5">Fetched Data</h1>');
+                        newWindow.document.write(resultHtml);
+                        newWindow.document.write('</div></body></html>');
+                        newWindow.document.close();
+                    } else {
+                        $('#result').html('<p class="text-warning">No records found.</p>');
+                    }
                 }).fail(function(xhr){
                     $('#result').html('<p class="text-danger">Error: ' + xhr.responseText + '</p>');
                 });
@@ -114,3 +146,5 @@
     </script>
 </body>
 </html>
+
+
