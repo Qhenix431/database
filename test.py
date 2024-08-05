@@ -130,4 +130,3 @@ def fetch_record():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
