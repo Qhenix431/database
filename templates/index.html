@@ -3,14 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Posts</title>
+    <title>Flask Application</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-    <h1>Posts</h1>
-    <ul>
-        {% for post in posts %}
-        <li>{{ post['title'] }}: {{ post['content'] }}</li>
-        {% endfor %}
-    </ul>
+    <div class="container">
+        <h1 class="mt-5">Database</h1>
+
+        <h2>Fetch Data</h2>
+        <form id="fetchForm">
+            <div class="form-group">
+                <label for="type">Type:</label>
+                <select class="form-control" id="type" name="type">
+                    <option value="ORDER_ID">ORDER_ID</option>
+                    <option value="PID">PID</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="identifier">Identifier:</label>
+                <input type="text" class="form-control" id="identifier" name="identifier" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Fetch</button>
+        </form>
+
+        <h2 class="mt-5">Add New Data</h2>
+        <form id="addForm">
+            <div class="form-group">
+                <label for="PID">PID:</label>
+                <input type="text" class="form-control" id="PID" name="PID" required>
+            </div>
+            <div class="form-group">
+                <label for="ORDER_ID">ORDER_ID:</label>
+                <input type="text" class="form-control" id="ORDER_ID" name="ORDER_ID" required>
+            </div>
+            <div class="form-group">
+                <label for="FIN">FIN:</label>
+                <input type="text" class="form-control" id="FIN" name="FIN" required>
+            </div>
+            <div class="form-group">
+                <label for="EN_LOC_NURSE_UNIT_DISP">EN_LOC_NURSE_UNIT_DISP:</label>
+                <input type="text" class="form-control" id="EN_LOC_NURSE_UNIT_DISP" name="EN_LOC_NURSE_UNIT_DISP" required>
+            </div>
+            <div class="form-group">
+                <label for="ACCN">ACCN:</label>
+                <input type="text" class="form-control" id="ACCN" name="ACCN" required>
+            </div>
+            <div class="form-group">
+                <label for="ORDER_MNEMONIC">ORDER_MNEMONIC:</label>
+                <input type="text" class="form-control" id="ORDER_MNEMONIC" name="ORDER_MNEMONIC" required>
+            </div>
+            <div class="form-group">
+                <label for="TASK_ASSAY_CD">TASK_ASSAY_CD:</label>
+                <input type="text" class="form-control" id="TASK_ASSAY_CD" name="TASK_ASSAY_CD" required>
+            </div>
+            <div class="form-group">
+                <label for="R_TASK_ASSAY_DISP">R_TASK_ASSAY_DISP:</label>
+                <input type="text" class="form-control" id="R_TASK_ASSAY_DISP" name="R_TASK_ASSAY_DISP" required>
+            </div>
+            <div class="form-group">
+                <label for="RESULT_VALUE_NUMERIC">RESULT_VALUE_NUMERIC:</label>
+                <input type="text" class="form-control" id="RESULT_VALUE_NUMERIC" name="RESULT_VALUE_NUMERIC" required>
+            </div>
+            <div class="form-group">
+                <label for="PERFORM_DT_TM">PERFORM_DT_TM:</label>
+                <input type="text" class="form-control" id="PERFORM_DT_TM" name="PERFORM_DT_TM" required>
+            </div>
+            <button type="submit" class="btn btn-success">Add Data</button>
+        </form>
+
+        <div id="result" class="mt-5"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            $('#fetchForm').submit(function(event){
+                event.preventDefault();
+                const type = $('#type').val();
+                const identifier = $('#identifier').val();
+                const params = type === 'ORDER_ID' ? { type: type, ORDER_ID: identifier } : { type: type, PID: identifier };
+
+                $.get('/fetch', params, function(data) {
+                    $('#result').html('<pre>' + JSON.stringify(data, null, 4) + '</pre>');
+                }).fail(function(xhr){
+                    $('#result').html('<p class="text-danger">Error: ' + xhr.responseText + '</p>');
+                });
+            });
+
+            $('#addForm').submit(function(event){
+                event.preventDefault();
+                const formData = $(this).serializeArray().reduce((obj, item) => {
+                    obj[item.name] = item.value;
+                    return obj;
+                }, {});
+
+                $.ajax({
+                    url: '/data',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function(response){
+                        $('#result').html('<p class="text-success">' + response + '</p>');
+                    },
+                    error: function(xhr){
+                        $('#result').html('<p class="text-danger">Error: ' + xhr.responseText + '</p>');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
