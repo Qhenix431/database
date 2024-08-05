@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import sqlite3
 
 def get_connection():
@@ -9,31 +9,57 @@ def get_connection():
         print(e)
     return conn
 
-def query_database(order_id):
+def query_database(type ,data):
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM sampleData WHERE ORDER_ID =?',(order_id,))
-    rows = cursor.fetchall()
     results = []
-    for row in rows:
-        results.append({
-            'PID': row[0],
-            'ORDER_ID': row[1],
-            'FIN': row[2],
-            'EN_LOC_NURSE_UNIT_DISP': row[3],
-            'ACCN': row[4],
-            'ORDER_MNEMONIC': row[5],
-            'TASK_ASSAY_CD': row[6],
-            'R_TASK_ASSAY_DISP': row[7],
-            'RESULT_VALUE_NUMERIC': row[8],
-            'PERFORM_DT_TM': row[9]
-        })
+    if type == 'order_id':
+        cursor.execute('SELECT * FROM sampleData WHERE ORDER_ID =?',(data,))
+        rows = cursor.fetchall()
 
-    conn.close()
-    return results
+        for row in rows:
+            results.append({
+                'PID': row[0],
+                'ORDER_ID': row[1],
+                'FIN': row[2],
+                'EN_LOC_NURSE_UNIT_DISP': row[3],
+                'ACCN': row[4],
+                'ORDER_MNEMONIC': row[5],
+                'TASK_ASSAY_CD': row[6],
+                'R_TASK_ASSAY_DISP': row[7],
+                'RESULT_VALUE_NUMERIC': row[8],
+                'PERFORM_DT_TM': row[9]
+            })
 
+        conn.close()
+        return results
+    elif type == 'pid':
+        cursor.execute('SELECT * FROM sampleData WHERE PID =?', (data,))
+        rows = cursor.fetchall()
+
+        for row in rows:
+            results.append({
+                'PID': row[0],
+                'ORDER_ID': row[1],
+                'FIN': row[2],
+                'EN_LOC_NURSE_UNIT_DISP': row[3],
+                'ACCN': row[4],
+                'ORDER_MNEMONIC': row[5],
+                'TASK_ASSAY_CD': row[6],
+                'R_TASK_ASSAY_DISP': row[7],
+                'RESULT_VALUE_NUMERIC': row[8],
+                'PERFORM_DT_TM': row[9]
+            })
+
+        conn.close()
+        return results
 
 app = Flask(__name__)
+
+@app.route('/')
+def index():
+   return render_template('index.html')
+
 @app.route('/data', methods=['GET', 'POST'])
 def database():
     conn = get_connection()
@@ -81,11 +107,22 @@ def database():
 @app.route('/fetch', methods=['GET'])
 def fetch_record():
     order_id = request.args.get('ORDER_ID')
-    if not order_id:
-        return 'Invalid input: Missing ORDER_ID', 400
+    type_check = request.args.get('type')
+    pid = request.args.get('PID')
+    if not order_id and not pid:
+        return 'Invalid input: Missing data', 401
+    if not type_check:
+        return 'Missing type check', 403
+    if type_check not in ['ORDER_ID','PID']:
+        return 'Invalid type', 402
 
     try:
-        results = query_database(order_id)
+        if order_id:
+            data_type = 'order_id'
+            results = query_database(data_type, order_id)
+        else:
+            data_type = 'pid'
+            results = query_database(data_type, pid)
     except Exception as e:
         return f'Error querying data: {str(e)}', 500
 
@@ -93,3 +130,4 @@ def fetch_record():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
